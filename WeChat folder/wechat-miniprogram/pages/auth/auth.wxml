@@ -1,0 +1,72 @@
+<view class="container">
+  <view class="auth-screen">
+    <view class="auth-header">
+      <view class="logo">◈ Event Reminder</view>
+      <view class="title">
+        <text>Welcome</text>
+        <text class="accent">Back.</text>
+      </view>
+      <view class="subtitle">Connect to server, then sign in.</view>
+    </view>
+
+    <view class="server-section">
+      <view class="label-row">
+        <label>Server ID</label>
+        <text class="port-hint">Port: 3000</text>
+      </view>
+      <view class="server-row">
+        <input
+          class="input"
+          type="text"
+          placeholder="192.168.1.x"
+          value="{{serverIP}}"
+          bindinput="onInputServerIP" />
+        <button
+          class="test-btn {{testing ? 'testing' : ''}}"
+          bindtap="testServer">{{testing ? '···' : 'Test'}}</button>
+      </view>
+      <view class="server-status {{serverStatusType}}">{{serverStatus}}</view>
+    </view>
+
+    <view class="tabs">
+      <view
+        class="tab-btn {{currentTab === 'login' ? 'active' : ''}}"
+        bindtap="switchTab"
+        data-tab="login">Login</view>
+      <view
+        class="tab-btn {{currentTab === 'register' ? 'active' : ''}}"
+        bindtap="switchTab"
+        data-tab="register">Register</view>
+    </view>
+
+    <view class="form">
+      <view class="field">
+        <label>Username</label>
+        <input
+          class="input"
+          type="text"
+          placeholder="Enter username"
+          bindinput="onInputUsername"
+          value="{{username}}" />
+      </view>
+      <view class="field">
+        <label>Password</label>
+        <input
+          class="input"
+          type="password"
+          placeholder="Enter password"
+          bindinput="onInputPassword"
+          value="{{password}}" />
+      </view>
+
+      <button
+        class="submit-btn"
+        bindtap="submitAuth"
+        disabled="{{loading}}">
+        {{loading ? '...' : (currentTab === 'login' ? 'Sign In' : 'Create Account')}}
+      </button>
+
+      <view class="msg {{msgType}}">{{msg}}</view>
+    </view>
+  </view>
+</view>

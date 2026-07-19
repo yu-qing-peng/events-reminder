@@ -1,0 +1,16 @@
+{
+  "pages": [
+    "pages/auth/auth",
+    "pages/events/events"
+  ],
+  "window": {
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#0c0c0e",
+    "navigationBarTitleText": "Event Reminder",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#0c0c0e"
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

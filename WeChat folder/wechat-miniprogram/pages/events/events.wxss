@@ -1,0 +1,247 @@
+.container {
+  min-height: 100vh;
+  padding: 0 32rpx 40rpx;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32rpx 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32rpx;
+}
+
+.logo {
+  font-family: var(--font-head);
+  font-size: 26rpx;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.user-pill {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 40rpx;
+  padding: 10rpx 24rpx 10rpx 16rpx;
+}
+
+.user-avatar {
+  width: 44rpx;
+  height: 44rpx;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-size: 20rpx;
+  font-weight: 800;
+  color: #000;
+}
+
+.user-name {
+  font-size: 22rpx;
+  color: var(--text-muted);
+}
+
+.logout-btn {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  padding-left: 16rpx;
+}
+
+.add-event-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+}
+
+.form-title {
+  font-family: var(--font-head);
+  font-size: 24rpx;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 24rpx;
+}
+
+.event-inputs {
+  display: flex;
+  gap: 16rpx;
+}
+
+.event-inputs .field {
+  flex: 1;
+  margin-bottom: 16rpx;
+}
+
+.input {
+  font-size: 24rpx;
+  padding: 18rpx 22rpx;
+}
+
+.picker {
+  color: var(--text-muted);
+}
+
+.picker:not(:empty) {
+  color: var(--text);
+}
+
+.add-btn {
+  width: 100%;
+  padding: 20rpx;
+  background: transparent;
+  border: 1px dashed var(--border-bright);
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 24rpx;
+  cursor: pointer;
+  transition: all 0.18s;
+  letter-spacing: 0.06em;
+}
+
+.add-btn:active {
+  background: rgba(200, 255, 0, 0.06);
+  border-color: var(--accent);
+}
+
+.events-section {
+  flex: 1;
+}
+
+.section-title {
+  font-size: 20rpx;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 20rpx;
+}
+
+.events-list {
+  height: 600rpx;
+}
+
+.event-card {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24rpx 28rpx;
+  margin-bottom: 16rpx;
+}
+
+.event-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.event-dot.past {
+  background: var(--text-muted);
+}
+
+.event-dot.soon {
+  background: var(--danger);
+}
+
+.event-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.event-title {
+  font-family: var(--font-head);
+  font-size: 26rpx;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4rpx;
+}
+
+.event-time {
+  font-size: 20rpx;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.event-countdown {
+  font-size: 20rpx;
+  font-weight: 500;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.event-countdown.past {
+  color: var(--text-muted);
+}
+
+.event-countdown.soon {
+  color: var(--danger);
+}
+
+.del-btn {
+  color: var(--border-bright);
+  font-size: 30rpx;
+  line-height: 1;
+  padding: 4rpx 8rpx;
+  flex-shrink: 0;
+}
+
+.del-btn:active {
+  color: var(--danger);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 64rpx 0;
+  color: var(--text-muted);
+  font-size: 24rpx;
+  letter-spacing: 0.04em;
+}
+
+.empty-state .icon {
+  font-size: 56rpx;
+  margin-bottom: 16rpx;
+  opacity: 0.4;
+}
+
+.subscribe-section {
+  margin-top: 32rpx;
+  text-align: center;
+}
+
+.subscribe-btn {
+  padding: 24rpx 48rpx;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 24rpx;
+}
+
+.subscribe-btn:active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.subscribed {
+  font-size: 22rpx;
+  color: var(--success);
+}

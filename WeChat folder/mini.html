@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Reminder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c0c0e;
+      --surface: #141418;
+      --border: #232328;
+      --border-bright: #3a3a44;
+      --accent: #c8ff00;
+      --accent-dim: #8aad00;
+      --text: #e8e8f0;
+      --text-muted: #6b6b7a;
+      --danger: #ff4d6d;
+      --success: #00e5a0;
+      --font-head: 'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+      --radius: 10px;
+    }
+
+    html, body {
+      width: 300px;
+      height: 160px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      user-select: none;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    #titlebar {
+      -webkit-app-region: drag;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    #titlebar .logo {
+      font-family: var(--font-head);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .win-btns {
+      -webkit-app-region: no-drag;
+      display: flex;
+      gap: 6px;
+    }
+    .win-btn {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      background: var(--border-bright);
+    }
+    .win-btn:hover { opacity: 0.75; }
+    .win-btn.restore {
+      background: var(--accent);
+    }
+
+    #eventContent {
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      height: calc(160px - 33px);
+    }
+
+    .event-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+    .event-title {
+      font-family: var(--font-head);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+
+    .event-time {
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+    }
+
+    .event-countdown {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    .event-countdown.soon { color: var(--danger); }
+
+    .empty-state {
+      text-align: center;
+      padding: 16px 0;
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+
+    .restore-btn {
+      width: 100%;
+      padding: 8px;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius);
+      color: #000;
+      font-family: var(--font-head);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: opacity 0.18s;
+    }
+    .restore-btn:hover { opacity: 0.85; }
+  </style>
+</head>
+<body>
+
+<div id="titlebar">
+  <span class="logo">◈ Event</span>
+  <div class="win-btns">
+    <button class="win-btn restore" onclick="restoreWindow()"></button>
+  </div>
+</div>
+
+<div id="eventContent">
+  <div class="event-info" id="eventInfo">
+    <div class="empty-state">Loading...</div>
+  </div>
+</div>
+
+<button class="restore-btn" onclick="restoreWindow()">Restore Window</button>
+
+<script>
+let currentEvent = null;
+let countdownInterval = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.electronAPI) {
+    window.electronAPI.onMiniEventsUpdated((eventData) => {
+      currentEvent = eventData;
+      renderEvent();
+      startCountdown();
+    });
+  }
+  loadEvent();
+  startCountdown();
+});
+
+async function loadEvent() {
+  if (window.electronAPI) {
+    try {
+      const event = await window.electronAPI.getUpcomingEvent();
+      currentEvent = event;
+    } catch {
+      currentEvent = null;
+    }
+  }
+  renderEvent();
+}
+
+function renderEvent() {
+  const container = document.getElementById('eventInfo');
+
+  if (!currentEvent) {
+    container.innerHTML = '<div class="empty-state">No upcoming events</div>';
+    return;
+  }
+
+  const now = new Date();
+  const evDate = new Date(currentEvent.eventDate);
+  const diff = evDate - now;
+  const soon = diff > 0 && diff < 60 * 60 * 1000;
+
+  const timeLabel = evDate.toLocaleDateString('en-ZA', {
+    weekday: 'short', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+
+  const countdownClass = soon ? 'soon' : '';
+  const countdown = diff < 0 ? 'Passed' : formatCountdown(diff);
+
+  container.innerHTML = `
+    <div class="event-title">${escHtml(currentEvent.title)}</div>
+    <div class="event-time">${timeLabel}</div>
+    <div class="event-countdown ${countdownClass}">${countdown}</div>
+  `;
+}
+
+function formatCountdown(ms) {
+  const days = Math.floor(ms / 86400000);
+  const hrs = Math.floor((ms % 86400000) / 3600000);
+  const mins = Math.floor((ms % 3600000) / 60000);
+  if (days > 0) return `${days}d ${hrs}h`;
+  if (hrs > 0) return `${hrs}h ${mins}m`;
+  return `${mins}m`;
+}
+
+function startCountdown() {
+  if (countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = setInterval(renderEvent, 1000);
+}
+
+function restoreWindow() {
+  if (window.electronAPI) {
+    window.electronAPI.maximize();
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

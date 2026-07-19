@@ -1,0 +1,84 @@
+<view class="container">
+  <view class="header">
+    <view class="header-left">
+      <view class="logo">◈ Event Reminder</view>
+    </view>
+    <view class="user-pill" bindtap="logout">
+      <view class="user-avatar">{{avatar}}</view>
+      <view class="user-name">{{username}}</view>
+      <view class="logout-btn">× out</view>
+    </view>
+  </view>
+
+  <view class="add-event-form">
+    <view class="form-title">+ New Event</view>
+    <view class="field">
+      <input
+        class="input"
+        type="text"
+        placeholder="Event title..."
+        bindinput="onInputTitle"
+        value="{{newTitle}}" />
+    </view>
+    <view class="event-inputs">
+      <view class="field">
+        <picker mode="date" bindchange="onDateChange" value="{{newDate}}">
+          <view class="input picker">
+            {{newDate || 'Select date'}}
+          </view>
+        </picker>
+      </view>
+      <view class="field">
+        <picker mode="time" bindchange="onTimeChange" value="{{newTime}}">
+          <view class="input picker">
+            {{newTime || 'Select time'}}
+          </view>
+        </picker>
+      </view>
+    </view>
+    <view class="field">
+      <input
+        class="input"
+        type="text"
+        placeholder="Note (optional)"
+        bindinput="onInputNote"
+        value="{{newNote}}" />
+    </view>
+    <button class="add-btn" bindtap="addEvent">＋ Add Event</button>
+  </view>
+
+  <view class="events-section">
+    <view class="section-title">Upcoming</view>
+    <scroll-view scroll-y class="events-list">
+      <block wx:if="{{events.length === 0}}">
+        <view class="empty-state">
+          <view class="icon">◌</view>
+          <view>No events yet.</view>
+        </view>
+      </block>
+      <block wx:else>
+        <view
+          wx:for="{{events}}"
+          wx:key="id"
+          class="event-card">
+          <view class="event-dot {{item.dotClass}}"></view>
+          <view class="event-info">
+            <view class="event-title">{{item.title}}</view>
+            <view class="event-time">{{item.timeLabel}}{{item.note ? ' · ' + item.note : ''}}</view>
+          </view>
+          <view class="event-countdown {{item.cdClass}}">{{item.countdown}}</view>
+          <view class="del-btn" bindtap="deleteEvent" data-id="{{item.id}}">×</view>
+        </view>
+      </block>
+    </scroll-view>
+  </view>
+
+  <view class="subscribe-section">
+    <button class="subscribe-btn" bindtap="requestSubscribe" wx:if="{{!subscribed}}">
+      🔔 Enable Reminders
+    </button>
+    <view class="subscribed" wx:else>
+      <text>✓ Reminders enabled</text>
+    </view>
+  </view>
+</view>
