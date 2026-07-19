@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Event Reminder</string>
+    <string name="welcome_back">Welcome\nBack.</string>
+    <string name="server_connect_hint">Connect to your server, then sign in.</string>
+    <string name="server_ip">Server IP</string>
+    <string name="test">Test</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="sign_in">Sign In</string>
+    <string name="create_account">Create Account</string>
+    <string name="your_events">Your Events</string>
+    <string name="new_event">+ New Event</string>
+    <string name="event_title_hint">Event title…</string>
+    <string name="note_hint">Note (optional)</string>
+    <string name="add_event">＋ Add Event</string>
+    <string name="upcoming">Upcoming</string>
+    <string name="no_events">No events yet.</string>
+    <string name="passed">Passed</string>
+    <string name="server_reachable">✓ Server reachable</string>
+    <string name="server_unreachable">✗ Cannot reach server</string>
+    <string name="fill_fields">Please fill in all fields.</string>
+    <string name="invalid_credentials">Invalid credentials</string>
+    <string name="account_created">✓ Account created! Signing in…</string>
+    <string name="connection_error">✗ Cannot reach server. Check the IP.</string>
+    <string name="notification_channel_countdown">Event Countdown</string>
+    <string name="notification_channel_reminder">Event Reminders</string>
+    <string name="notification_countdown_title">Upcoming Event</string>
+    <string name="notification_no_events">No upcoming events</string>
+    <string name="heartbeat_channel_desc">Shows next event countdown while app is in background</string>
+    <string name="reminder_channel_desc">Alerts you 1 hour before an event</string>
+    <string name="restore_window">Open App</string>
+</resources>

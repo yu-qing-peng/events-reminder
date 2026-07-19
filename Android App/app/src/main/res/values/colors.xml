@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#0C0C0E</color>
+    <color name="surface">#141418</color>
+    <color name="border">#232328</color>
+    <color name="border_bright">#3A3A44</color>
+    <color name="accent">#C8FF00</color>
+    <color name="accent_dim">#8AAD00</color>
+    <color name="text">#E8E8F0</color>
+    <color name="text_muted">#6B6B7A</color>
+    <color name="danger">#FF4D6D</color>
+    <color name="success">#00E5A0</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="tab_inactive_bg">@color/surface</color>
+    <color name="transparent">#00000000</color>
+</resources>
