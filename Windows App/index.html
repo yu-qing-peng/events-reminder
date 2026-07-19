@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Reminder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c0c0e;
+      --surface: #141418;
+      --border: #232328;
+      --border-bright: #3a3a44;
+      --accent: #c8ff00;
+      --accent-dim: #8aad00;
+      --text: #e8e8f0;
+      --text-muted: #6b6b7a;
+      --danger: #ff4d6d;
+      --success: #00e5a0;
+      --font-head: 'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+      --radius: 10px;
+    }
+
+    html, body {
+      width: 420px;
+      height: 660px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      user-select: none;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* ── TITLEBAR ── */
+    #titlebar {
+      -webkit-app-region: drag;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    #titlebar .logo {
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .win-btns {
+      -webkit-app-region: no-drag;
+      display: flex;
+      gap: 8px;
+    }
+    .win-btn {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .win-btn:hover { opacity: 0.75; }
+    .win-btn.close { background: #ff5f57; }
+    .win-btn.min   { background: #febc2e; }
+
+    /* ── SCREENS ── */
+    .screen {
+      display: none;
+      flex-direction: column;
+      height: calc(660px - 41px);
+      overflow-y: auto;
+      padding: 28px 24px;
+      animation: fadeIn 0.25s ease;
+    }
+    .screen.active { display: flex; }
+    #appScreen { overflow-y: hidden; }
+    .events-section {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+      padding-right: 4px;
+      margin-right: -4px;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* ── AUTH SCREEN ── */
+    .auth-header {
+      margin-bottom: 32px;
+    }
+    .auth-header h1 {
+      font-family: var(--font-head);
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+    .auth-header h1 span { color: var(--accent); }
+    .auth-header p {
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3px;
+      margin-bottom: 24px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      border-radius: 7px;
+      transition: all 0.18s;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #000;
+      font-weight: 500;
+    }
+
+    /* ── FORM ── */
+    .field { margin-bottom: 14px; }
+    label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.18s;
+    }
+    input:focus { border-color: var(--accent); }
+
+    .server-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .server-row .field { flex: 1; margin: 0; }
+    .dg-row {
+      margin-top: 8px;
+    }
+    .dg-row input {
+      width: 100%;
+      padding: 6px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .dg-row input:focus { border-color: var(--accent); color: var(--text); }
+    #testBtn {
+      padding: 11px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.18s;
+    }
+    #testBtn:hover { border-color: var(--border-bright); color: var(--text); }
+    #serverStatus {
+      font-size: 10px;
+      margin-top: 6px;
+      min-height: 14px;
+    }
+    #serverStatus.ok   { color: var(--success); }
+    #serverStatus.err  { color: var(--danger); }
+
+    .keep-signed-in {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--text-muted);
+      cursor: pointer;
+      margin: 8px 0 14px;
+      letter-spacing: 0.04em;
+    }
+    .keep-signed-in input { accent-color: var(--accent); }
+    .submit-btn {
+      width: 100%;
+      padding: 13px;
+      margin-top: 8px;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius);
+      color: #000;
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: opacity 0.18s, transform 0.12s;
+    }
+    .submit-btn:hover { opacity: 0.88; }
+    .submit-btn:active { transform: scale(0.98); }
+    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .msg {
+      font-size: 11px;
+      text-align: center;
+      min-height: 16px;
+      margin-top: 10px;
+    }
+    .msg.err { color: var(--danger); }
+    .msg.ok  { color: var(--success); }
+
+    /* ── APP SCREEN ── */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .app-header h2 {
+      font-family: var(--font-head);
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px 5px 8px;
+    }
+    .user-avatar {
+      width: 22px; height: 22px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head);
+      font-size: 10px;
+      font-weight: 800;
+      color: #000;
+    }
+    .user-name {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .logout-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 11px;
+      padding: 0 0 0 8px;
+      font-family: var(--font-mono);
+      transition: color 0.15s;
+    }
+    .logout-btn:hover { color: var(--danger); }
+
+    /* ── ADD EVENT ── */
+    .add-event-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      overflow: hidden;
+      transition: border-color 0.18s;
+    }
+    .add-event-form:hover { border-color: var(--border-bright); }
+    .add-event-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .add-event-header h3 {
+      font-family: var(--font-head);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .add-event-body {
+      padding: 0 16px 16px;
+      animation: fadeIn 0.2s ease;
+    }
+    .add-event-form.collapsed .add-event-body { display: none; }
+    .event-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .event-inputs .field { margin: 0; }
+    .event-inputs input {
+      font-size: 12px;
+      padding: 9px 11px;
+    }
+    .title-field input { font-size: 12px; padding: 9px 11px; }
+
+    input[type="datetime-local"] {
+      width: 100%;
+      padding: 9px 11px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.18s;
+      color-scheme: dark;
+    }
+    input[type="datetime-local"]:focus { border-color: var(--accent); }
+
+    .add-btn {
+      width: 100%;
+      padding: 10px;
+      background: transparent;
+      border: 1px dashed var(--border-bright);
+      border-radius: var(--radius);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.18s;
+      letter-spacing: 0.06em;
+    }
+    .add-btn:hover {
+      background: rgba(200, 255, 0, 0.06);
+      border-color: var(--accent);
+    }
+
+    /* ── EVENTS LIST ── */
+    .events-label {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    #eventsList { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+    .event-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.2s ease;
+      transition: border-color 0.18s;
+    }
+    .event-card:hover { border-color: var(--border-bright); }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+
+    .event-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .event-dot.past { background: var(--text-muted); }
+    .event-dot.soon { background: var(--danger); }
+
+    .event-info { flex: 1; min-width: 0; }
+    .event-title {
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+    .event-time {
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+    .event-countdown {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    .event-countdown.past { color: var(--text-muted); }
+    .event-countdown.soon { color: var(--danger); }
+
+    .del-btn {
+      background: none;
+      border: none;
+      color: var(--border-bright);
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+      padding: 2px 4px;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .del-btn:hover { color: var(--danger); }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 0;
+      color: var(--text-muted);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+    .empty-state .icon { font-size: 28px; margin-bottom: 8px; opacity: 0.4; }
+
+    /* ── AI CARD ── */
+    .ai-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      overflow: hidden;
+      transition: border-color 0.18s;
+    }
+    .ai-card:hover { border-color: var(--border-bright); }
+    .ai-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .ai-card-header h3 {
+      font-family: var(--font-head);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .ai-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 1;
+      padding: 2px 6px;
+      transition: all 0.15s;
+    }
+    .ai-toggle:hover { border-color: var(--border-bright); color: var(--text); }
+    .ai-card-body {
+      padding: 0 16px 16px;
+      animation: fadeIn 0.2s ease;
+    }
+    .ai-card.collapsed .ai-card-body { display: none; }
+    .ai-subtitle {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      letter-spacing: 0.04em;
+    }
+    .ai-input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .ai-input-row .input-wrap {
+      flex: 1;
+      position: relative;
+    }
+    .ai-input-row .input-wrap input {
+      width: 100%;
+      padding: 9px 11px;
+      padding-right: 36px;
+      box-sizing: border-box;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.18s;
+    }
+    .ai-input-row .input-wrap input:focus { border-color: var(--accent); }
+    .ai-input-row .input-wrap input::placeholder { color: var(--text-muted); }
+    .ai-ask-btn {
+      padding: 9px 14px;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius);
+      color: #000;
+      font-family: var(--font-head);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.18s, transform 0.12s;
+    }
+    .ai-ask-btn:hover { opacity: 0.88; }
+    .ai-ask-btn:active { transform: scale(0.97); }
+    .ai-ask-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .ai-ask-btn.loading { opacity: 0.5; pointer-events: none; }
+
+    /* ── AI MODAL ── */
+    .ai-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      animation: fadeIn 0.15s ease;
+    }
+    .ai-overlay.show { display: flex; }
+    .ai-modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 340px;
+      max-height: 480px;
+      display: flex;
+      flex-direction: column;
+      animation: modalIn 0.18s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(8px); }
+      to { opacity: 1; transform: none; }
+    }
+    .ai-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .ai-modal-header h3 {
+      font-family: var(--font-head);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .ai-modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 2px;
+      transition: color 0.15s;
+    }
+    .ai-modal-close:hover { color: var(--text); }
+    .ai-modal-body {
+      padding: 12px 16px 0;
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text);
+      overflow-y: auto;
+      flex: 1;
+    }
+    .ai-modal-footer {
+      padding: 12px 16px 12px;
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
+    }
+    .ai-modal-body .err { color: var(--danger); }
+    .ai-modal-body .loading-text {
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ai-modal-body .dot-pulse {
+      display: inline-flex;
+      gap: 4px;
+    }
+    .ai-modal-body .dot-pulse span {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.2s infinite;
+    }
+    .ai-modal-body .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+    .ai-modal-body .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse {
+      0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── AI MODAL MARKDOWN ── */
+    .ai-modal-body b { color: var(--accent); font-weight: 700; }
+    .ai-modal-body i { font-style: italic; }
+    .ai-modal-body code {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent);
+    }
+    .ai-modal-body pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      margin: 6px 0;
+      overflow-x: auto;
+    }
+    .ai-modal-body pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 11px;
+      color: var(--text);
+    }
+    .ai-modal-body ul, .ai-modal-body ol {
+      padding-left: 20px;
+      margin: 4px 0;
+    }
+    .ai-modal-body li { margin-bottom: 2px; }
+    .ai-modal-body a {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+    .ai-modal-body a:hover { opacity: 0.8; }
+    .ai-modal-body p { margin: 4px 0; }
+
+    /* ── CONVERSATION MODAL ── */
+    .conversation {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
+    }
+    .msg-row {
+      display: flex;
+      flex-direction: column;
+    }
+    .msg-row.user { align-items: flex-end; }
+    .msg-row.assistant { align-items: flex-start; }
+    .msg-bubble {
+      max-width: 85%;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+    .msg-bubble.user {
+      background: var(--accent);
+      color: #1a1a2e;
+      border-bottom-right-radius: 2px;
+    }
+    .msg-bubble.assistant {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 2px;
+    }
+    .msg-bubble.assistant b { color: var(--accent); }
+    .msg-bubble.assistant code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 4px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+    }
+    .msg-bubble.assistant pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin: 4px 0;
+      overflow-x: auto;
+    }
+    .msg-bubble.assistant pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text);
+    }
+    .msg-bubble.assistant ul, .msg-bubble.assistant ol {
+      padding-left: 16px;
+      margin: 2px 0;
+    }
+    .msg-bubble.assistant a {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+    .msg-bubble.assistant p { margin: 2px 0; }
+    .pending-event-card {
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      margin: 4px 0;
+      font-size: 12px;
+    }
+    .pending-event-card .ev-title { font-weight: 700; color: var(--accent); }
+    .pending-event-card .ev-detail { color: var(--muted); margin-top: 2px; }
+    .confirm-bar {
+      display: none;
+      gap: 8px;
+      padding: 0 0 10px 0;
+      margin-top: 0;
+      border-top: none;
+    }
+    .confirm-bar.show { display: flex; }
+    .confirm-btn {
+      flex: 1;
+      background: var(--accent);
+      color: #1a1a2e;
+      border: none;
+      border-radius: var(--radius);
+      padding: 7px 0;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .confirm-btn:hover { opacity: 0.85; }
+    .cancel-btn {
+      flex: 1;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 7px 0;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .cancel-btn:hover { background: var(--surface); }
+    .followup-row {
+      display: flex;
+      gap: 6px;
+      padding-top: 0;
+    }
+    .followup-row .input-wrap {
+      flex: 1;
+      position: relative;
+    }
+    .followup-row .input-wrap input {
+      width: 100%;
+      padding: 7px 10px;
+      padding-right: 36px;
+      box-sizing: border-box;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 12px;
+      outline: none;
+    }
+    .followup-row .input-wrap input:focus { border-color: var(--accent); }
+    .followup-row button {
+      background: var(--accent);
+      color: #1a1a2e;
+      border: none;
+      border-radius: var(--radius);
+      padding: 7px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .followup-row button:hover { opacity: 0.85; }
+    .followup-row .mic-btn {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      opacity: 0.5;
+      transition: opacity 0.15s;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      width: auto;
+      height: auto;
+      border-radius: 0;
+      font-weight: 400;
+      font-size: inherit;
+    }
+    .followup-row .mic-btn:hover { opacity: 1; color: var(--text); }
+    .followup-row .mic-btn.listening { opacity: 1; color: var(--accent); }
+    .followup-row .mic-btn.loading { opacity: 1; color: var(--accent); animation: pulse 0.8s ease-in-out infinite; }
+    .mic-btn {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      opacity: 0.5;
+      transition: opacity 0.15s;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+    }
+    .mic-btn:hover { opacity: 1; color: var(--text); }
+    .mic-btn.listening { opacity: 1; color: var(--accent); }
+    .mic-btn.loading { opacity: 1; color: var(--accent); animation: pulse 0.8s ease-in-out infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TITLEBAR -->
+<div id="titlebar">
+  <span class="logo">◈ Event Reminder</span>
+  <div class="win-btns">
+    <button class="win-btn min" onclick="window.electronAPI?.minimize()"></button>
+    <button class="win-btn close" onclick="window.electronAPI?.close()"></button>
+  </div>
+</div>
+
+<!-- AUTH SCREEN -->
+<div class="screen active" id="authScreen">
+  <div class="auth-header">
+    <h1>Welcome<br/><span>Back.</span></h1>
+    <p>Connect to your server, then sign in.</p>
+  </div>
+
+  <!-- Server config -->
+  <div class="field" style="margin-bottom:6px;">
+    <label>Server IP</label>
+    <div class="server-row">
+      <div class="field">
+        <input type="text" id="serverIP" placeholder="192.168.1.x" />
+      </div>
+      <button id="testBtn" onclick="testServer()">Test</button>
+    </div>
+    <div id="serverStatus"></div>
+  </div>
+
+  <!-- Login / Register tabs -->
+  <div class="tabs" style="margin-top:16px;">
+    <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">Login</button>
+    <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">Register</button>
+  </div>
+
+  <div class="field">
+    <label>Username</label>
+    <input type="text" id="authUsername" autocomplete="off" />
+  </div>
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="authPassword" onkeydown="if(event.key==='Enter')submitAuth()" />
+  </div>
+
+  <label class="keep-signed-in" id="keepLabel">
+    <input type="checkbox" id="keepChk" /> Keep me signed in for 24h
+  </label>
+
+  <button class="submit-btn" id="authBtn" onclick="submitAuth()">Sign In</button>
+  <div class="msg" id="authMsg"></div>
+</div>
+
+<!-- APP SCREEN -->
+<div class="screen" id="appScreen">
+  <div class="app-header">
+    <h2>Your Events</h2>
+    <div class="user-pill">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <span class="user-name" id="userNameDisplay">—</span>
+      <button class="logout-btn" onclick="logout()">× out</button>
+    </div>
+  </div>
+
+  <!-- AI Agent card -->
+  <div class="ai-card" id="aiCard">
+    <div class="ai-card-header" onclick="toggleAICard()">
+      <h3>◆ AI Assistant</h3>
+      <button class="ai-toggle" id="aiToggle">+</button>
+    </div>
+    <div class="ai-card-body" id="aiCardBody">
+      <p class="ai-subtitle">Ask anything about your upcoming events</p>
+      <div class="ai-input-row">
+        <div class="input-wrap">
+          <input type="text" id="aiQuestion" placeholder="e.g. What's coming up this week?" onkeydown="if(event.key==='Enter')askAI()" />
+          <button class="mic-btn" onclick="startSpeech('aiQuestion', this, askAI)" title="Voice input"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></button>
+        </div>
+        <button class="ai-ask-btn" id="aiAskBtn" onclick="askAI()">Ask</button>
+      </div>
+      <div class="dg-row">
+        <input type="text" id="dgKey" placeholder="Deepgram API key (optional, for voice input)" onchange="localStorage.setItem('deepgramKey', this.value)" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Add event form -->
+  <div class="add-event-form" id="addEventCard">
+    <div class="add-event-header" onclick="toggleAddEvent()">
+      <h3>+ New Event</h3>
+      <button class="ai-toggle" id="addEventToggle">+</button>
+    </div>
+    <div class="add-event-body" id="addEventBody">
+      <div class="field title-field" style="margin-bottom:8px;">
+        <input type="text" id="evtTitle" placeholder="Event title…" />
+      </div>
+      <div class="event-inputs">
+        <div class="field">
+          <input type="datetime-local" id="evtDate" />
+        </div>
+        <div class="field">
+          <input type="text" id="evtNote" placeholder="Note (optional)" />
+        </div>
+      </div>
+      <button class="add-btn" onclick="addEvent()">＋ Add Event</button>
+    </div>
+  </div>
+
+  <div class="events-section">
+    <div class="events-label">Upcoming</div>
+    <div id="eventsList">
+    <div class="empty-state"><div class="icon">◌</div>No events yet.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let serverBase = '';
+let currentUser = null;
+let currentUserId = null;
+let currentTab = 'login';
+let events = [];
+let countdownInterval = null;
+let heartbeatInterval = null;
+let aiCardCollapsed = true;
+let addEventCollapsed = true;
+let conversationHistory = [];
+let pendingEvent = null;
+
+// Persist server IP
+const savedIP = localStorage.getItem('serverIP');
+if (savedIP) document.getElementById('serverIP').value = savedIP;
+
+// Persist Deepgram API key
+const savedDG = localStorage.getItem('deepgramKey');
+if (savedDG) document.getElementById('dgKey').value = savedDG;
+
+// Apply collapsed state to cards
+document.getElementById('aiCard')?.classList.add('collapsed');
+document.getElementById('addEventCard')?.classList.add('collapsed');
+
+// Restore saved session
+const savedSession = localStorage.getItem('savedSession');
+if (savedSession) {
+  try {
+    const session = JSON.parse(savedSession);
+    if (Date.now() - session.timestamp < 86400000) {
+      onLoginSuccess(session.username, session.userId);
+    } else {
+      localStorage.removeItem('savedSession');
+    }
+  } catch(e) { localStorage.removeItem('savedSession'); }
+}
+
+// ── SERVER ──
+function getBase() {
+  const ip = document.getElementById('serverIP').value.trim();
+  localStorage.setItem('serverIP', ip);
+  return `http://${ip}:3000`;
+}
+
+async function testServer() {
+  const btn = document.getElementById('testBtn');
+  const status = document.getElementById('serverStatus');
+  btn.textContent = '…';
+  try {
+    const res = await fetch(getBase() + '/', { signal: AbortSignal.timeout(4000) });
+    if (res.ok) {
+      status.textContent = '✓ Server reachable';
+      status.className = 'ok';
+    } else {
+      status.textContent = `✗ HTTP ${res.status}`;
+      status.className = 'err';
+    }
+  } catch (e) {
+    status.textContent = '✗ Cannot reach server';
+    status.className = 'err';
+  } finally {
+    btn.textContent = 'Test';
+  }
+}
+
+// ── TABS ──
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+  document.getElementById('authBtn').textContent = tab === 'login' ? 'Sign In' : 'Create Account';
+  document.getElementById('authMsg').textContent = '';
+  document.getElementById('keepLabel').style.display = tab === 'login' ? '' : 'none';
+}
+
+// ── AUTH ──
+async function submitAuth() {
+  const btn = document.getElementById('authBtn');
+  const msg = document.getElementById('authMsg');
+  const username = document.getElementById('authUsername').value.trim();
+  const password = document.getElementById('authPassword').value;
+
+  if (!username || !password) {
+    showMsg('authMsg', 'Please fill in all fields.', 'err'); return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '…';
+  msg.textContent = '';
+
+  const endpoint = currentTab === 'login' ? '/api/login' : '/api/register';
+
+  try {
+    const res = await fetch(getBase() + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+      signal: AbortSignal.timeout(6000),
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      if (currentTab === 'register') {
+        showMsg('authMsg', '✓ Account created! Signing in…', 'ok');
+        setTimeout(() => submitLoginDirectly(username, password), 800);
+      } else {
+        onLoginSuccess(username, data.userId);
+      }
+    } else {
+      showMsg('authMsg', data.error || 'Something went wrong.', 'err');
+    }
+  } catch (e) {
+    showMsg('authMsg', '✗ Cannot reach server. Check the IP.', 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = currentTab === 'login' ? 'Sign In' : 'Create Account';
+  }
+}
+
+async function submitLoginDirectly(username, password) {
+  try {
+    const res = await fetch(getBase() + '/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (res.ok && data.success) onLoginSuccess(username, data.userId);
+  } catch(e) {}
+}
+
+function onLoginSuccess(username, userId) {
+  currentUser = username;
+  currentUserId = userId;
+  document.getElementById('userAvatar').textContent = username[0].toUpperCase();
+  document.getElementById('userNameDisplay').textContent = username;
+  if (document.getElementById('keepChk').checked) {
+    localStorage.setItem('savedSession', JSON.stringify({ username, userId, timestamp: Date.now() }));
+  }
+  loadEvents();
+  showScreen('appScreen');
+  startHeartbeat();
+}
+
+function logout() {
+  if (window.electronAPI && currentUserId) {
+    window.electronAPI.logout(currentUserId);
+  }
+  localStorage.removeItem('savedSession');
+  stopHeartbeat();
+  currentUser = null;
+  currentUserId = null;
+  events = [];
+  clearInterval(countdownInterval);
+  document.getElementById('authUsername').value = '';
+  document.getElementById('authPassword').value = '';
+  document.getElementById('authMsg').textContent = '';
+  document.getElementById('keepChk').checked = false;
+  showScreen('authScreen');
+}
+
+function startHeartbeat() {
+  stopHeartbeat();
+  if (window.electronAPI && currentUserId) {
+    window.electronAPI.heartbeat(currentUserId);
+    heartbeatInterval = setInterval(() => {
+      window.electronAPI.heartbeat(currentUserId);
+    }, 60000);
+  }
+}
+
+function stopHeartbeat() {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+  }
+}
+
+// ── EVENTS (stored locally per user) ──
+function storageKey() { return `events_${currentUser}`; }
+
+function loadEvents() {
+  const raw = localStorage.getItem(storageKey());
+  events = raw ? JSON.parse(raw) : [];
+  renderEvents();
+  clearInterval(countdownInterval);
+  countdownInterval = setInterval(renderEvents, 30000); // update every 30s
+  // Also check for upcoming reminders
+  scheduleReminders();
+  // Update mini window with next event
+  updateMiniWindow();
+}
+
+function saveEvents() {
+  localStorage.setItem(storageKey(), JSON.stringify(events));
+}
+
+function addEvent() {
+  const title = document.getElementById('evtTitle').value.trim();
+  const dateStr = document.getElementById('evtDate').value;
+  const note = document.getElementById('evtNote').value.trim();
+
+  if (!title || !dateStr) {
+    alert('Please enter a title and date.'); return;
+  }
+
+  const ev = {
+    id: Date.now(),
+    title,
+    date: dateStr,
+    note,
+    reminded: false,
+  };
+  events.unshift(ev);
+  events.sort((a, b) => new Date(a.date) - new Date(b.date));
+  saveEvents();
+  renderEvents();
+  scheduleReminders();
+  updateMiniWindow();
+
+  document.getElementById('evtTitle').value = '';
+  document.getElementById('evtDate').value = '';
+  document.getElementById('evtNote').value = '';
+}
+
+function deleteEvent(id) {
+  events = events.filter(e => e.id !== id);
+  saveEvents();
+  renderEvents();
+}
+
+function renderEvents() {
+  const list = document.getElementById('eventsList');
+  if (events.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">◌</div>No events yet.</div>';
+    return;
+  }
+  list.innerHTML = events.map(ev => {
+    const now = new Date();
+    const evDate = new Date(ev.date);
+    const diff = evDate - now;
+    const past = diff < 0;
+    const soon = diff > 0 && diff < 60 * 60 * 1000; // < 1 hour
+
+    const dotClass = past ? 'past' : soon ? 'soon' : '';
+    const cdClass = past ? 'past' : soon ? 'soon' : '';
+    const countdown = past
+      ? 'Passed'
+      : soon
+        ? `In ${Math.round(diff / 60000)}m`
+        : formatCountdown(diff);
+
+    const timeLabel = evDate.toLocaleDateString('en-ZA', {
+      weekday: 'short', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+
+    return `
+      <div class="event-card">
+        <div class="event-dot ${dotClass}"></div>
+        <div class="event-info">
+          <div class="event-title">${escHtml(ev.title)}</div>
+          <div class="event-time">${timeLabel}${ev.note ? ' · ' + escHtml(ev.note) : ''}</div>
+        </div>
+        <div class="event-countdown ${cdClass}">${countdown}</div>
+        <button class="del-btn" onclick="deleteEvent(${ev.id})">×</button>
+      </div>`;
+  }).join('');
+}
+
+function formatCountdown(ms) {
+  const days = Math.floor(ms / 86400000);
+  const hrs = Math.floor((ms % 86400000) / 3600000);
+  const mins = Math.floor((ms % 3600000) / 60000);
+  if (days > 0) return `${days}d ${hrs}h`;
+  if (hrs > 0) return `${hrs}h ${mins}m`;
+  return `${mins}m`;
+}
+
+function scheduleReminders() {
+  events.forEach(ev => {
+    if (ev.reminded) return;
+    const diff = new Date(ev.date) - new Date();
+    if (diff > 0 && diff <= 60 * 60 * 1000) {
+      // Within an hour - notify
+      ev.reminded = true;
+      saveEvents();
+      if (window.electronAPI) {
+        window.electronAPI.showNotification(
+          '⏰ ' + ev.title,
+          `Happening in ${formatCountdown(diff)}!`
+        );
+      }
+    } else if (diff > 0) {
+      // Schedule future reminder (up to 24h ahead)
+      const reminderTime = diff - 60 * 60 * 1000;
+      if (reminderTime < 24 * 60 * 60 * 1000) {
+        setTimeout(() => {
+          ev.reminded = true;
+          saveEvents();
+          if (window.electronAPI) {
+            window.electronAPI.showNotification('⏰ ' + ev.title, 'Happening in 1 hour!');
+          }
+        }, reminderTime);
+      }
+    }
+  });
+}
+
+// ── UTILS ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg ' + type;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function restoreWindow() {
+  if (window.electronAPI) {
+    window.electronAPI.maximize();
+  }
+}
+
+// ── AI AGENT ──
+const AI_API_KEY = 'sk-0e353cc25af20e11f54ced20d45bcdf567f3737767168e8f9aa8e260399ac8a9';
+const AI_BASE_URL = 'https://api.vip1129.cc/';
+
+function toggleAICard() {
+  aiCardCollapsed = !aiCardCollapsed;
+  document.getElementById('aiCard').classList.toggle('collapsed', aiCardCollapsed);
+  document.getElementById('aiToggle').textContent = aiCardCollapsed ? '+' : '−';
+}
+
+function toggleAddEvent() {
+  addEventCollapsed = !addEventCollapsed;
+  document.getElementById('addEventCard').classList.toggle('collapsed', addEventCollapsed);
+  document.getElementById('addEventToggle').textContent = addEventCollapsed ? '+' : '−';
+}
+
+// ── SPEECH RECOGNITION (MediaRecorder + Deepgram) ──
+let mediaRecorder = null;
+let audioChunks = [];
+let recordingStream = null;
+let isRecording = false;
+
+async function startSpeech(inputId, btn, submitFn) {
+  if (isRecording) {
+    mediaRecorder.stop();
+    isRecording = false;
+    btn.classList.remove('listening');
+    return;
+  }
+
+  const dgKey = localStorage.getItem('deepgramKey');
+  if (!dgKey) {
+    alert('Set your Deepgram API key in the field below the AI input to use voice.');
+    return;
+  }
+
+  try {
+    recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (e) {
+    alert('Microphone access denied: ' + e.message);
+    return;
+  }
+
+  audioChunks = [];
+  const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+  mediaRecorder = new MediaRecorder(recordingStream, { mimeType: mime });
+
+  mediaRecorder.ondataavailable = e => {
+    if (e.data.size > 0) audioChunks.push(e.data);
+  };
+
+  mediaRecorder.onstop = async () => {
+    recordingStream.getTracks().forEach(t => t.stop());
+    recordingStream = null;
+
+    const audioBlob = new Blob(audioChunks, { type: mime });
+    btn.classList.add('loading');
+
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
+
+      const res = await fetch('https://api.deepgram.com/v1/listen?model=whisper&smart_format=true', {
+        method: 'POST',
+        headers: { 'Authorization': 'Token ' + dgKey },
+        body: formData,
+        signal: AbortSignal.timeout(30000),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error('Deepgram HTTP ' + res.status + (errText ? ': ' + errText.slice(0, 100) : ''));
+      }
+
+      const data = await res.json();
+      const transcript = data.results?.channels?.[0]?.alternatives?.[0]?.transcript || '';
+
+      if (transcript) {
+        document.getElementById(inputId).value = transcript;
+        if (submitFn) setTimeout(submitFn, 100);
+      }
+    } catch (e) {
+      alert('Transcription failed: ' + e.message);
+    }
+    btn.classList.remove('loading');
+  };
+
+  mediaRecorder.start(250);
+  isRecording = true;
+  btn.classList.add('listening');
+}
+
+async function askAI() {
+  const question = document.getElementById('aiQuestion').value.trim();
+  if (!question) return;
+
+  const btn = document.getElementById('aiAskBtn');
+  btn.classList.add('loading');
+  btn.textContent = '…';
+
+  conversationHistory = [];
+  pendingEvent = null;
+  document.getElementById('confirmBar').classList.remove('show');
+
+  const raw = localStorage.getItem(storageKey());
+  const allEvents = raw ? JSON.parse(raw) : [];
+  const now = new Date();
+  const todayStr = now.toLocaleDateString('en-ZA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const eventContext = allEvents.length === 0
+    ? 'The user has no upcoming events.'
+    : allEvents.map(e => {
+        const d = new Date(e.date);
+        return `- "${e.title}" on ${d.toLocaleDateString('en-ZA', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}${e.note ? ' (note: ' + e.note + ')' : ''}`;
+      }).join('\n');
+
+  const systemMsg = `You are a helpful assistant for an event reminder app. Today is ${todayStr}. Answer concisely (1-3 sentences).\n\nYou can add events using the add_event function when the user asks to create one.\n\n- For well-known dates (Valentine's Day, Christmas, New Year, etc.) use the actual date.\n- For relative dates like "next Thursday" or "10 days from now" compute the actual date from today.\n- If a date is ambiguous or you are unsure, DO NOT guess — instead respond with a clarifying question asking the user for the specific date. Wait for their answer before calling the function.\n- Default time to 12:00 if not specified.\n- Output dates in YYYY-MM-DDTHH:mm format.\n\nHere are the user's events:\n${eventContext}`;
+
+  document.getElementById('conversation').innerHTML = '<span class="loading-text">Thinking<span class="dot-pulse"><span></span><span></span><span></span></span></span>';
+  document.getElementById('aiOverlay').classList.add('show');
+
+  conversationHistory.push({ role: 'user', content: question });
+  document.getElementById('aiQuestion').value = '';
+
+  try {
+    const result = await sendToAI(systemMsg, conversationHistory);
+    if (result) conversationHistory.push(result);
+    renderConversation();
+  } catch (err) {
+    renderConversation();
+    appendMessage('assistant', '✗ ' + (err.message || 'Failed to get answer.'));
+  } finally {
+    btn.classList.remove('loading');
+    btn.textContent = 'Ask';
+  }
+}
+
+function createEvent(title, dateStr, note) {
+  if (!title || !dateStr) return null;
+  const ev = {
+    id: Date.now(),
+    title: title,
+    date: dateStr,
+    note: note || '',
+    reminded: false,
+  };
+  events.unshift(ev);
+  events.sort((a, b) => new Date(a.date) - new Date(b.date));
+  saveEvents();
+  renderEvents();
+  scheduleReminders();
+  updateMiniWindow();
+  return ev;
+}
+
+async function sendToAI(systemMsg, messages) {
+  const apiMessages = messages.filter(m => m.content != null);
+  const res = await fetch(AI_BASE_URL + 'v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + AI_API_KEY,
+    },
+    body: JSON.stringify({
+      model: 'gpt-5.4-mini',
+      messages: [
+        { role: 'system', content: systemMsg },
+        ...apiMessages,
+      ],
+      tools: [{
+        type: 'function',
+        function: {
+          name: 'add_event',
+          description: "Add a new event to the user's calendar",
+          parameters: {
+            type: 'object',
+            properties: {
+              title: { type: 'string', description: 'Event title' },
+              date: { type: 'string', description: 'Date and time in YYYY-MM-DDTHH:mm format. Guess the date for known holidays. Compute relative dates like "next Thursday" or "10 days from now" from today.' },
+              note: { type: 'string', description: 'Optional note' }
+            },
+            required: ['title', 'date']
+          }
+        }
+      }],
+      tool_choice: 'auto',
+      max_tokens: 500,
+    }),
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  const message = data.choices?.[0]?.message;
+  if (message.tool_calls) {
+    const toolCall = message.tool_calls[0];
+    if (toolCall.function.name === 'add_event') {
+      const args = JSON.parse(toolCall.function.arguments);
+      pendingEvent = args;
+      return { role: 'assistant', content: null, tool_calls: [{ function: { name: 'add_event', arguments: toolCall.function.arguments } }] };
+    }
+  }
+  return { role: 'assistant', content: message.content || 'No response received.' };
+}
+
+function renderConversation() {
+  const container = document.getElementById('conversation');
+  container.innerHTML = '';
+  for (const msg of conversationHistory) {
+    if (msg.role === 'user') {
+      const row = document.createElement('div');
+      row.className = 'msg-row user';
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble user';
+      bubble.textContent = msg.content;
+      row.appendChild(bubble);
+      container.appendChild(row);
+    } else if (msg.role === 'assistant' && msg.content) {
+      const row = document.createElement('div');
+      row.className = 'msg-row assistant';
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble assistant';
+      bubble.innerHTML = renderMarkdown(escHtml(msg.content));
+      row.appendChild(bubble);
+      container.appendChild(row);
+    }
+  }
+  if (pendingEvent) {
+    appendPendingEventCard(container);
+  }
+  document.getElementById('aiModalBody').scrollTop = document.getElementById('aiModalBody').scrollHeight;
+}
+
+function appendMessage(role, content) {
+  const container = document.getElementById('conversation');
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + role;
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble ' + role;
+  if (role === 'assistant') {
+    bubble.innerHTML = renderMarkdown(escHtml(content));
+  } else {
+    bubble.textContent = content;
+  }
+  row.appendChild(bubble);
+  container.appendChild(row);
+  document.getElementById('aiModalBody').scrollTop = document.getElementById('aiModalBody').scrollHeight;
+}
+
+function appendPendingEventCard(container) {
+  if (!pendingEvent) return;
+  const card = document.createElement('div');
+  card.className = 'pending-event-card';
+  card.innerHTML = `<div class="ev-title">📌 ${escHtml(pendingEvent.title)}</div><div class="ev-detail">📅 ${escHtml(pendingEvent.date)}${pendingEvent.note ? ' · ' + escHtml(pendingEvent.note) : ''}</div>`;
+  container.appendChild(card);
+  document.getElementById('confirmBar').classList.add('show');
+  document.getElementById('aiModalBody').scrollTop = document.getElementById('aiModalBody').scrollHeight;
+}
+
+function confirmEvent() {
+  if (!pendingEvent) return;
+  const ev = createEvent(pendingEvent.title, pendingEvent.date, pendingEvent.note || '');
+  if (ev) {
+    const d = new Date(ev.date);
+    const timeLabel = d.toLocaleDateString('en-ZA', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    pendingEvent = null;
+    document.getElementById('confirmBar').classList.remove('show');
+    conversationHistory.push({ role: 'assistant', content: '✓ Added: "' + ev.title + '" on ' + timeLabel + (ev.note ? ' — ' + ev.note : '') });
+    renderConversation();
+  }
+}
+
+function cancelEvent() {
+  pendingEvent = null;
+  document.getElementById('confirmBar').classList.remove('show');
+  conversationHistory.push({ role: 'assistant', content: '✗ Event creation cancelled.' });
+  renderConversation();
+}
+
+async function sendFollowUp() {
+  const input = document.getElementById('followupInput');
+  const text = input.value.trim();
+  if (!text) return;
+  if (pendingEvent) {
+    pendingEvent = null;
+    document.getElementById('confirmBar').classList.remove('show');
+  }
+  conversationHistory.push({ role: 'user', content: text });
+  input.value = '';
+  renderConversation();
+  const container = document.getElementById('conversation');
+  const loadingRow = document.createElement('div');
+  loadingRow.className = 'msg-row assistant';
+  loadingRow.innerHTML = '<div class="msg-bubble assistant"><span class="loading-text">Thinking<span class="dot-pulse"><span></span><span></span><span></span></span></span></div>';
+  loadingRow.id = 'loadingRow';
+  container.appendChild(loadingRow);
+  document.getElementById('aiModalBody').scrollTop = document.getElementById('aiModalBody').scrollHeight;
+  const raw = localStorage.getItem(storageKey());
+  const allEvents = raw ? JSON.parse(raw) : [];
+  const now = new Date();
+  const todayStr = now.toLocaleDateString('en-ZA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const eventContext = allEvents.length === 0
+    ? 'The user has no upcoming events.'
+    : allEvents.map(e => {
+        const d = new Date(e.date);
+        return `- "${e.title}" on ${d.toLocaleDateString('en-ZA', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}${e.note ? ' (note: ' + e.note + ')' : ''}`;
+      }).join('\n');
+  const systemMsg = `You are a helpful assistant for an event reminder app. Today is ${todayStr}. Answer concisely (1-3 sentences).\n\nYou can add events using the add_event function when the user asks to create one.\n\n- For well-known dates (Valentine's Day, Christmas, New Year, etc.) use the actual date.\n- For relative dates like "next Thursday" or "10 days from now" compute the actual date from today.\n- If a date is ambiguous or you are unsure, DO NOT guess — instead respond with a clarifying question asking the user for the specific date. Wait for their answer before calling the function.\n- Default time to 12:00 if not specified.\n- Output dates in YYYY-MM-DDTHH:mm format.\n\nHere are the user's events:\n${eventContext}`;
+  try {
+    const result = await sendToAI(systemMsg, conversationHistory);
+    document.getElementById('loadingRow')?.remove();
+    if (result) conversationHistory.push(result);
+    renderConversation();
+  } catch (err) {
+    document.getElementById('loadingRow')?.remove();
+    renderConversation();
+    appendMessage('assistant', '✗ ' + (err.message || 'Failed to get answer.'));
+  }
+}
+
+function parseInline(s) {
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+  s = s.replace(/\*([^*]+)\*/g, '<i>$1</i>');
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  return s;
+}
+
+function renderMarkdown(s) {
+  // fenced code blocks — protect from further processing
+  s = s.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
+    return '<pre><code>' + code + '</code></pre>';
+  });
+  // unordered lists
+  s = s.replace(/^[\s]*[-*][\s]+(.+)$/gm, function(_, item) { return '<li>' + parseInline(item) + '</li>'; });
+  s = s.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+  // ordered lists
+  s = s.replace(/^[\s]*\d+\.[\s]+(.+)$/gm, function(_, item) { return '<li>' + parseInline(item) + '</li>'; });
+  s = s.replace(/((?:<li>.*<\/li>\n?)+)(?![\s\S]*<\/ul>)/g, function(m) {
+    return m.includes('<ul>') ? m : '<ol>' + m + '</ol>';
+  });
+  // inline formatting on remaining text lines
+  var lines = s.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    if (line.startsWith('<') && (line.endsWith('>') || line.endsWith('</pre>'))) continue;
+    if (line.startsWith('<li>') || line.startsWith('<ul>') || line.startsWith('<ol>') || line.startsWith('</')) continue;
+    lines[i] = parseInline(line);
+  }
+  return lines.join('\n');
+}
+
+function hideModal() {
+  conversationHistory = [];
+  pendingEvent = null;
+  document.getElementById('confirmBar').classList.remove('show');
+  document.getElementById('aiOverlay').classList.remove('show');
+}
+
+// ── MINI WINDOW ──
+function updateMiniWindow() {
+  if (!window.electronAPI || !currentUser) return;
+  const now = new Date();
+  const upcoming = events
+    ? events.filter(ev => new Date(ev.date) > now)
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+    : [];
+  window.electronAPI.updateMiniEvents(upcoming[0] || null);
+}
+
+// Listen for events request from main process (for mini window)
+if (window.electronAPI) {
+  window.electronAPI.onRequestEvents && window.electronAPI.onRequestEvents(() => {
+    const now = new Date();
+    const upcoming = events
+      ? events.filter(ev => new Date(ev.date) > now)
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+      : [];
+    return upcoming[0] || null;
+  });
+}
+</script>
+
+<!-- AI Modal -->
+<div class="ai-overlay" id="aiOverlay" onclick="if(event.target===this)hideModal()">
+  <div class="ai-modal">
+    <div class="ai-modal-header">
+      <h3>◆ AI Response</h3>
+      <button class="ai-modal-close" onclick="hideModal()">×</button>
+    </div>
+    <div class="ai-modal-body" id="aiModalBody">
+      <div class="conversation" id="conversation"></div>
+    </div>
+    <div class="ai-modal-footer">
+      <div class="confirm-bar" id="confirmBar">
+        <button class="confirm-btn" onclick="confirmEvent()">✓ Proceed</button>
+        <button class="cancel-btn" onclick="cancelEvent()">✗ Cancel</button>
+      </div>
+      <div class="followup-row">
+        <div class="input-wrap">
+          <input type="text" id="followupInput" placeholder="Ask a follow-up..." onkeydown="if(event.key==='Enter')sendFollowUp()" />
+          <button class="mic-btn" onclick="startSpeech('followupInput', this, sendFollowUp)" title="Voice input"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></button>
+        </div>
+        <button onclick="sendFollowUp()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

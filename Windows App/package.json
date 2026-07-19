@@ -1,0 +1,23 @@
+{
+  "name": "event-reminder",
+  "version": "1.0.0",
+  "description": "Important Events Reminder",
+  "main": "main.js",
+  "author": "You",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.eventreminder.app",
+    "productName": "Event Reminder",
+    "directories": { "output": "dist" },
+    "files": ["*.js", "*.html"],
+    "win": { "target": "portable" },
+    "forceCodeSigning": false
+  }
+}
